@@ -25,13 +25,31 @@ func (fsys UnionFS) Open(name string) (fs.File, error) {
 			// but all the directory reads in internal/godoc
 			// come from fsys.ReadDir, which does that for us.
 			// So we can ignore direct f.ReadDir calls.
-			return f, nil
+			return &file{File: f, fsys: sub}, nil
 		}
 		if errOut == nil {
 			errOut = err
 		}
 	}
 	return nil, errOut
+}
+
+type file struct {
+	fs.File
+	fsys fs.FS
+}
+
+func (f file) FS() fs.FS {
+	return f.fsys
+}
+
+type dirEntry struct {
+	fs.DirEntry
+	fsys fs.FS
+}
+
+func (d dirEntry) FS() fs.FS {
+	return d.fsys
 }
 
 func (fsys UnionFS) ReadDir(name string) ([]fs.DirEntry, error) {
@@ -44,7 +62,10 @@ func (fsys UnionFS) ReadDir(name string) ([]fs.DirEntry, error) {
 			errOut = err
 		}
 		if len(all) == 0 {
-			all = append(all, list...)
+			all = make([]fs.DirEntry, len(list))
+			for i, d := range list {
+				all[i] = &dirEntry{DirEntry: d, fsys: sub}
+			}
 		} else {
 			if seen == nil {
 				// Initialize seen only after we get two different directory listings.
@@ -57,7 +78,7 @@ func (fsys UnionFS) ReadDir(name string) ([]fs.DirEntry, error) {
 				name := d.Name()
 				if !seen[name] {
 					seen[name] = true
-					all = append(all, d)
+					all = append(all, &dirEntry{DirEntry: d, fsys: sub})
 				}
 			}
 		}
