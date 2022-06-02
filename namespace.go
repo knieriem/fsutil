@@ -13,12 +13,16 @@ type NameSpace struct {
 // Bind adds file system newfs at mount point `old`.
 // If option BindBefore is provided, newfs' contents appear first in the union,
 // otherweise after possibly existing files within `old`.
-func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) {
+func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) error {
+	if !fs.ValidPath(old) {
+		return fs.ErrInvalid
+	}
+
 	var a bindAction
 	for _, o := range options {
 		o(&a)
 	}
-	if old != "" {
+	if old != "." {
 		newfs = PrefixFS(old, newfs)
 	}
 	var afs annotateFS
@@ -28,10 +32,11 @@ func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) {
 
 	if !a.before || len(nsp.UnionFS) == 0 {
 		nsp.append(&afs)
-		return
+		return nil
 	}
 	nsp.UnionFS = append(nsp.UnionFS[:1], nsp.UnionFS...)
 	nsp.UnionFS[0] = &afs
+	return nil
 }
 
 type BindOption func(*bindAction)
