@@ -89,10 +89,16 @@ func (fsys UnionFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	var all []fs.DirEntry
 	var seen map[string]bool // seen[name] is true if name is listed in all; lazily initialized
 	var errOut error
+	anyOK := false
 	for _, sub := range fsys {
 		list, err := fs.ReadDir(sub, name)
 		if err != nil {
 			errOut = err
+		} else {
+			anyOK = true
+		}
+		if len(list) == 0 {
+			continue
 		}
 		if len(all) == 0 {
 			all = make([]fs.DirEntry, len(list))
@@ -116,7 +122,7 @@ func (fsys UnionFS) ReadDir(name string) ([]fs.DirEntry, error) {
 			}
 		}
 	}
-	if len(all) > 0 {
+	if len(all) > 0 || anyOK {
 		return all, nil
 	}
 	return nil, errOut
