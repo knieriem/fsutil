@@ -4,7 +4,10 @@
 
 package fsutil
 
-import "io/fs"
+import (
+	"io"
+	"io/fs"
+)
 
 var _ fs.ReadDirFS = UnionFS{}
 
@@ -19,12 +22,13 @@ func (fsys UnionFS) Open(name string) (fs.File, error) {
 	for _, sub := range fsys {
 		f, err := sub.Open(name)
 		if err == nil {
-			// Note: Should technically check for directory
-			// and return a synthetic directory that merges
-			// reads from all the matching directories,
-			// but all the directory reads in internal/godoc
-			// come from fsys.ReadDir, which does that for us.
-			// So we can ignore direct f.ReadDir calls.
+			fi, err := f.Stat()
+			if err != nil {
+				return nil, err
+			}
+			if fi.IsDir() {
+				return &dir{file: file{File: f, fsys: sub}, name: name, union: fsys}, nil
+			}
 			return &file{File: f, fsys: sub}, nil
 		}
 		if errOut == nil {
@@ -41,6 +45,35 @@ type file struct {
 
 func (f file) FS() fs.FS {
 	return f.fsys
+}
+
+type dir struct {
+	file
+	name  string
+	union fs.ReadDirFS
+	list  []fs.DirEntry
+}
+
+func (d *dir) ReadDir(n int) ([]fs.DirEntry, error) {
+	if d.list == nil {
+		list, err := d.union.ReadDir(d.name)
+		if err != nil {
+			return nil, err
+		}
+		if n <= 0 {
+			return list, nil
+		}
+		d.list = list
+	}
+	if len(d.list) == 0 {
+		return nil, io.EOF
+	}
+	if n > len(d.list) {
+		n = len(d.list)
+	}
+	list := d.list[:n]
+	d.list = d.list[n:]
+	return list, nil
 }
 
 type dirEntry struct {
