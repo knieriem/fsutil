@@ -12,7 +12,7 @@ type NameSpace struct {
 
 // Bind adds file system newfs at mount point `old`.
 // If option BindBefore is provided, newfs' contents appear first in the union,
-// otherweise after possibly existing files within `old`.
+// otherwise after possibly existing files within `old`.
 func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) error {
 	if !fs.ValidPath(old) {
 		return fs.ErrInvalid
