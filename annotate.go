@@ -10,9 +10,9 @@ import (
 // related to the underlying file system
 type annotateFS struct {
 	fs.FS
-	Label  string
 	Prefix string
 	OSDir  string
+	values map[interface{}]interface{}
 }
 
 func (a *annotateFS) ReadDir(name string) ([]fs.DirEntry, error) {
@@ -45,4 +45,20 @@ func OSName(name string, fsys fs.FS) (string, error) {
 		name = path.Join(afs.OSDir, name)
 	}
 	return name, nil
+}
+
+func (a *annotateFS) setValue(key, value interface{}) {
+	if a.values == nil {
+		a.values = make(map[interface{}]interface{})
+	}
+	a.values[key] = value
+}
+
+func Value(fsys fs.FS, key interface{}) interface{} {
+	afs, ok := fsys.(*annotateFS)
+	if !ok {
+		return nil
+	}
+	return afs.values[key]
+
 }

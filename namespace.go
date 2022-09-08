@@ -25,17 +25,16 @@ func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) error
 	if old != "." {
 		newfs = PrefixFS(old, newfs)
 	}
-	var afs annotateFS
-	afs.Prefix = old
-	afs.FS = newfs
-	afs.OSDir = a.newOSDir
+	a.fs.Prefix = old
+	a.fs.FS = newfs
+	a.fs.OSDir = a.newOSDir
 
 	if !a.before || len(nsp.UnionFS) == 0 {
-		nsp.append(&afs)
+		nsp.append(&a.fs)
 		return nil
 	}
 	nsp.UnionFS = append(nsp.UnionFS[:1], nsp.UnionFS...)
-	nsp.UnionFS[0] = &afs
+	nsp.UnionFS[0] = &a.fs
 	return nil
 }
 
@@ -44,11 +43,18 @@ type BindOption func(*bindAction)
 type bindAction struct {
 	before   bool
 	newOSDir string
+	fs       annotateFS
 }
 
 func BindBefore() BindOption {
 	return func(a *bindAction) {
 		a.before = true
+	}
+}
+
+func WithValue(key, value interface{}) BindOption {
+	return func(a *bindAction) {
+		a.fs.setValue(key, value)
 	}
 }
 
