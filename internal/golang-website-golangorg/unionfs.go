@@ -19,6 +19,10 @@ type UnionFS []fs.FS
 
 func (fsys UnionFS) Open(name string) (fs.File, error) {
 	var errOut error
+
+	if name == "." {
+		return &dir{name: ".", union: fsys}, nil
+	}
 	if len(fsys) == 0 {
 		return nil, fs.ErrNotExist
 	}
