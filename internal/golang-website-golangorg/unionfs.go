@@ -19,6 +19,9 @@ type UnionFS []fs.FS
 
 func (fsys UnionFS) Open(name string) (fs.File, error) {
 	var errOut error
+	if len(fsys) == 0 {
+		return nil, fs.ErrNotExist
+	}
 	for _, sub := range fsys {
 		f, err := sub.Open(name)
 		if err == nil {
