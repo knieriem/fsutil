@@ -134,3 +134,28 @@ func (fsys UnionFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	}
 	return nil, errOut
 }
+
+func (fsys UnionFS) Stat(name string) (fs.FileInfo, error) {
+	f, err := fsys.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	fi, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if item, ok := f.(interface{ FS() fs.FS }); ok {
+		return &fileInfo{FileInfo: fi, fsys: item.FS()}, nil
+	}
+	return fi, nil
+}
+
+type fileInfo struct {
+	fs.FileInfo
+	fsys fs.FS
+}
+
+func (fi *fileInfo) FS() fs.FS {
+	return fi.fsys
+}
