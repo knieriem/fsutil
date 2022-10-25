@@ -10,7 +10,6 @@ import (
 // related to the underlying file system
 type annotateFS struct {
 	fs.FS
-	Prefix string
 	OSDir  string
 	values map[interface{}]interface{}
 }
@@ -35,8 +34,8 @@ func OSName(name string, fsys fs.FS) (string, error) {
 	if name == "." {
 		return afs.OSDir, nil
 	}
-	if pfx := afs.Prefix; pfx != "." {
-		name = strings.TrimPrefix(name, pfx)
+	if fsys, ok := afs.FS.(*prefixFS); ok {
+		name = strings.TrimPrefix(name, fsys.pathPrefix)
 		if strings.HasPrefix(name, "/") {
 			name = name[1:]
 		}

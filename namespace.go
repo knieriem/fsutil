@@ -25,7 +25,6 @@ func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) error
 	if old != "." {
 		newfs = PrefixFS(old, newfs)
 	}
-	a.fs.Prefix = old
 	a.fs.FS = newfs
 	a.fs.OSDir = a.newOSDir
 
