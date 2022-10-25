@@ -4,12 +4,15 @@ import (
 	"io/fs"
 	"path"
 	"strings"
+	"sync"
 )
 
 // annotateFS is a wrapper that allows to store some information
 // related to the underlying file system
 type annotateFS struct {
 	fs.FS
+
+	mu     sync.RWMutex
 	values map[interface{}]interface{}
 }
 
@@ -36,6 +39,8 @@ func OSName(name string, fsys fs.FS) (string, error) {
 	if !ok {
 		return "", fs.ErrInvalid
 	}
+	afs.mu.RLock()
+	defer afs.mu.RUnlock()
 	rootOSDir, _ := afs.values[RootOSDirKey].(string)
 	if name == "." {
 		return rootOSDir, nil
@@ -53,6 +58,8 @@ func OSName(name string, fsys fs.FS) (string, error) {
 }
 
 func (a *annotateFS) setValue(key, value interface{}) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.values == nil {
 		a.values = make(map[interface{}]interface{})
 	}
@@ -64,6 +71,8 @@ func Value(fsys fs.FS, key interface{}) interface{} {
 	if !ok {
 		return nil
 	}
-	return afs.values[key]
 
+	afs.mu.RLock()
+	defer afs.mu.RUnlock()
+	return afs.values[key]
 }
