@@ -48,9 +48,7 @@ func OSName(name string, fsys fs.FS) (string, error) {
 	}
 	if fsys, ok := afs.FS.(*prefixFS); ok {
 		name = strings.TrimPrefix(name, fsys.pathPrefix)
-		if strings.HasPrefix(name, "/") {
-			name = name[1:]
-		}
+		name = strings.TrimPrefix(name, "/")
 	}
 	if rootOSDir != "" {
 		name = path.Join(rootOSDir, name)
