@@ -10,13 +10,18 @@ import (
 // related to the underlying file system
 type annotateFS struct {
 	fs.FS
-	OSDir  string
 	values map[interface{}]interface{}
 }
 
 func (a *annotateFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	return fs.ReadDir(a.FS, name)
 }
+
+type ValueKey int
+
+const (
+	RootOSDirKey ValueKey = iota
+)
 
 // OSName translates the given file or directory name relative to
 // the OS file system tree root, where the file or directory actually resides.
@@ -31,8 +36,9 @@ func OSName(name string, fsys fs.FS) (string, error) {
 	if !ok {
 		return "", fs.ErrInvalid
 	}
+	rootOSDir, _ := afs.values[RootOSDirKey].(string)
 	if name == "." {
-		return afs.OSDir, nil
+		return rootOSDir, nil
 	}
 	if fsys, ok := afs.FS.(*prefixFS); ok {
 		name = strings.TrimPrefix(name, fsys.pathPrefix)
@@ -40,8 +46,8 @@ func OSName(name string, fsys fs.FS) (string, error) {
 			name = name[1:]
 		}
 	}
-	if afs.OSDir != "" {
-		name = path.Join(afs.OSDir, name)
+	if rootOSDir != "" {
+		name = path.Join(rootOSDir, name)
 	}
 	return name, nil
 }

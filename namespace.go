@@ -26,7 +26,9 @@ func (nsp *NameSpace) Bind(old string, newfs fs.FS, options ...BindOption) error
 		newfs = PrefixFS(old, newfs)
 	}
 	a.fs.FS = newfs
-	a.fs.OSDir = a.newOSDir
+	if a.newOSDir != "" {
+		a.fs.setValue(RootOSDirKey, a.newOSDir)
+	}
 
 	if !a.before || len(nsp.UnionFS) == 0 {
 		nsp.append(&a.fs)
