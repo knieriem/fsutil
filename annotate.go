@@ -24,6 +24,7 @@ type ValueKey int
 
 const (
 	RootOSDirKey ValueKey = iota
+	LabelKey
 )
 
 // OSName translates the given file or directory name relative to
