@@ -7,6 +7,7 @@ package fsutil
 import (
 	"io"
 	"io/fs"
+	"time"
 )
 
 var _ fs.ReadDirFS = UnionFS{}
@@ -60,6 +61,29 @@ type dir struct {
 	union fs.ReadDirFS
 	list  []fs.DirEntry
 }
+
+func (d *dir) Stat() (fs.FileInfo, error) {
+	if d.file.File != nil {
+		return d.file.Stat()
+	}
+	return dummyInfo(d.name), nil
+}
+
+func (d *dir) Close() error {
+	if d.file.File != nil {
+		return d.file.Close()
+	}
+	return nil
+}
+
+type dummyInfo string
+
+func (name dummyInfo) Name() string  { return string(name) }
+func (dummyInfo) Size() int64        { return 0 }
+func (dummyInfo) Mode() fs.FileMode  { return fs.ModeDir | 0755 }
+func (dummyInfo) ModTime() time.Time { var t time.Time; return t }
+func (dummyInfo) IsDir() bool        { return true }
+func (dummyInfo) Sys() any           { return nil }
 
 func (d *dir) ReadDir(n int) ([]fs.DirEntry, error) {
 	if d.list == nil {
