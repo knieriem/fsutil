@@ -7,15 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/exp/maps"
+	"maps"
 )
 
 // StringMap returns an [fs.FS] consisting of the values of the specified map,
 // with keys used as filenames. For now, only a plain structure is allowed,
 // i.e. filenames must not contain slashes.
 func StringMap(m map[string]string) fs.FS {
-	filenames := maps.Keys(m)
-	slices.Sort(filenames)
+	filenames := slices.Sorted(maps.Keys(m))
 	dir := make([]fs.DirEntry, 0, len(filenames))
 	for _, name := range filenames {
 		if name == "." {
