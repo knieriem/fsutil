@@ -37,6 +37,9 @@ func (fsys UnionFS) Open(name string) (fs.File, error) {
 			if fi.IsDir() {
 				return &dir{file: file{File: f, fsys: sub}, name: name, union: fsys}, nil
 			}
+			if seeker, ok := f.(io.Seeker); ok {
+				return &seekableFile{file: file{File: f, fsys: sub}, Seeker: seeker}, nil
+			}
 			return &file{File: f, fsys: sub}, nil
 		}
 		if errOut == nil {
@@ -53,6 +56,11 @@ type file struct {
 
 func (f file) FS() fs.FS {
 	return f.fsys
+}
+
+type seekableFile struct {
+	file
+	io.Seeker
 }
 
 type dir struct {
