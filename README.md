@@ -1,3 +1,5 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/knieriem/fsutil.svg)](https://pkg.go.dev/github.com/knieriem/fsutil)
+
 This repository contains utilities around Go's `io/fs` package:
 
 -	UnionFS, which is a copy of the [`unionFS` type implemented
