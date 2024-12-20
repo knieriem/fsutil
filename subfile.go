@@ -48,6 +48,9 @@ func (sub *subFileFS) Stat(name string) (fs.FileInfo, error) {
 func (sub *subFileFS) ReadDir(name string) ([]fs.DirEntry, error) {
 	var dir [1]fs.DirEntry
 
+	if name != "." {
+		return nil, fs.ErrNotExist
+	}
 	dir[0] = &subFileDir{sub}
 	return dir[:], nil
 }
